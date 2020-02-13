@@ -1,0 +1,386 @@
+﻿@using CallManagerPanel.MVCWebUI.Library.Helpers
+@using CallManagerPanel.MVCWebUI.Models
+@model ICollection<CallManagerPanel.Entities.Concrete.Contact>
+@{
+    ViewBag.Title = "Çağrılar";
+}
+
+@Html.AntiForgeryToken()
+
+<div class="mx-2">
+
+    <table id="table-call-list" class="table table-striped table-bordered nowrap compact " style="width: 100%">
+        <thead>
+            <tr>
+                <th>+</th>
+                <th>Telefon Numarası</th>
+                <th>Tarih</th>
+                <th>Arama Nedeni</th>
+                <th>Arama Sonucu</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var contact in Model)
+            {
+                <tr data-id="@HashidsHelper.Encrypt(contact.Id)">
+                    <td></td>
+                    <td>@contact.Phone</td>
+                    <td>@contact.Date.ToShortDateString()</td>
+                    <td>@contact.CallReason</td>
+                    <td>@contact.CallResult</td>
+                </tr>
+            }
+
+        </tbody>
+        <tfoot>
+            <tr>
+                <th>+</th>
+                <th>Telefon Numarası</th>
+                <th>Tarih</th>
+                <th>Arama Nedeni</th>
+                <th>Arama Sonucu</th>
+            </tr>
+        </tfoot>
+    </table>
+</div>
+
+@* contact modal *@
+<div id="modal-contact" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">İletişim Bilgisi Ekle</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+
+                <form id="form-contact">
+                    <input id="contactvm-id" name="@nameof(ContactVm.Id)" type="text" value="" style="display: none" />
+
+                    <div class="form-group">
+                        <label for="contactvm-date">Tarih</label>
+                        <input id="contactvm-date" name="@nameof(ContactVm.Date)" type="text" class="form-control form-control-sm datetimepicker-input" data-target="#contactvm-date" , data-toggle="datetimepicker">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="contactvm-phone">İrtibat no</label>
+                        <input id="contactvm-phone" name="@nameof(ContactVm.Phone)" type="text" class="form-control form-control-sm phone-number-mask">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="contactvm-call-reason">Arama Nedeni</label>
+                        <textarea id="contactvm-call-reason" name="@nameof(ContactVm.CallReason)" rows="3" class="form-control form-control-sm"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="contactvm-call-result">Arama Sonucu</label>
+                        <textarea id="contactvm-call-result" name="@nameof(ContactVm.CallResult)" rows="3" class="form-control form-control-sm"></textarea>
+                    </div>
+
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="btn-submit-contact" type="button" class="btn btn-primary">Kaydet</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Kapat</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* call modal *@
+<div id="modal-call" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Arama Ekle</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+
+                <form id="form-call">
+                    <input id="callvm-id" name="@nameof(CallVm.Id)" type="text" value="" style="display: none" />
+                    <input id="callvm-contact-id" name="@nameof(CallVm.ContactId)" type="text" value="" style="display: none" />
+
+                    <div class="form-group">
+                        <label for="callvm-date">Tarih</label>
+                        <input id="callvm-date" name="@nameof(CallVm.Date)" type="text" class="form-control form-control-sm datetimepicker-input" data-target="#callvm-date" , data-toggle="datetimepicker">
+                    </div>
+
+                    <div class="form-group">
+                        <div class="form-check">
+                            <input value="true" id="callvm-is-access" name="@nameof(CallVm.IsAccess)" type="checkbox" class="form-check-input">
+                            <label class="form-check-label" for="callvm-is-access">Ulaşıldı</label>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="btn-submit-call" type="button" class="btn btn-primary">Kaydet</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Kapat</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts
+{
+    <script>
+
+        $(function() {
+
+            $('body').removeClass().css('margin-top', '100px');
+
+            $('#callvm-date').datetimepicker({ locale: myv.locale });
+            $('#contactvm-date').datetimepicker({ format: 'l', locale: myv.locale });
+
+            // datatable ın tarih formatı
+            $.fn.dataTable.moment(myv.dateFormat);
+
+            // datatable
+            const table = $('#table-call-list').DataTable({
+                lengthChange: false,
+                pageLength: 10,
+                fixedHeader: {
+                    headerOffset: 108
+                },
+                select: { style: 'single', selector: 'tr>td:not(.not-selectable)' },
+                order: [[2, 'desc']],
+                columnDefs: [{ "targets": 0, "name": "1", "orderable": false, "data": null, "defaultContent": '', 'className': 'details-control not-selectable' },],
+                dom: "<'row dt-row-fixed-top'<'col-sm-12 col-md-9 d-md-flex justify-content-between'l><'col-sm-12 col-md-3'f>><'row'<'col-sm-12'tr>><'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+                buttons: [
+                    // add contact modal
+                    { text: 'Ekle', action: function(e, dt, node, config) {
+                            $("#modal-contact .modal-title").text("İletişim Bilgisi Ekle");
+                            $("#modal-contact button#btn-submit-contact").text("Kaydet");
+                            $("#modal-contact").modal('show');
+                        }
+                    },
+                    // update contact modal
+                    { text: 'Güncelle', enabled: false, action: function(e, dt, node, config) {
+                            const selectedRow = table.row({ selected: true });
+                            if (selectedRow.length === 1) {
+                                const id = $(selectedRow.node()).data('id');
+                                postData({
+                                    url: '@Url.Action("GetContactAsJson", "Contact")',
+                                    data: { id: id },
+                                    addValidateToken: true
+                                }).then(res => {
+                                    if (res.success) {
+                                        $("#contactvm-id").val(res.data.Id);
+                                        $('#contactvm-date').val(moment(res.data.Date).format(myv.dateFormat));
+                                        $("#contactvm-phone").val(res.data.Phone);
+                                        $("#contactvm-call-reason").val(res.data.CallReason);
+                                        $("#contactvm-call-result").val(res.data.CallResult);
+                                        $("#modal-contact .modal-title").text("İletişim Bilgisi Güncelle");
+                                        $("#modal-contact button#btn-submit-contact").text("Güncelle");
+                                        $("#modal-contact").modal('show');
+                                    } else {
+                                        alert(res.message);
+                                    }
+                                });
+                            }
+                        }
+                    },
+                    // delete contact
+                    { text: 'Sil', enabled: false, action: function(e, dt, node, config) {
+                            const selectedRow = table.row({ selected: true });
+                            if (selectedRow.length === 1) {
+                                if (confirm("Silmek istediğinize emin misiniz?")) {
+                                    const id = $(selectedRow.node()).data('id');
+                                    postData({
+                                        url: '@Url.Action("Delete", "Contact")',
+                                        data: { id: id },
+                                        addValidateToken: true
+                                    }).then(res => {
+                                        if (res.success)
+                                            selectedRow.remove().draw();
+                                        alert(res.message);
+                                    });
+                                }
+                            }
+                        }
+                    }
+                ],
+                language: { "url": "//cdn.datatables.net/plug-ins/9dcbecd42ad/i18n/Turkish.json" },
+                initComplete: function(){
+                    const api = this.api();
+                    let buttons = new $.fn.dataTable.Buttons(api, { buttons: ['copy', 'excel', 'pdf', 'colvis'] });
+                    api.buttons().containers().appendTo('#table-call-list_wrapper .col-md-9:eq(0)');
+                }
+            });
+
+            // satır seçme / seçimi kaldırma olayları
+            table.on('select deselect', function() {
+                const selectedRowCount = table.rows({ selected: true }).count();
+                table.buttons([0], [1, 2]).enable(selectedRowCount === 1);
+            });
+            $('#table-call-list tbody').on('click', 'td.details-control', function() {
+                const tr = $(this).closest('tr');
+                const row = table.row(tr);
+
+                if (row.child.isShown()) {
+                    row.child.hide();
+                    tr.removeClass('shown');
+                } else {
+                    updateChildRows({ parentRow: row });
+                }
+            });
+
+            // update or create contact
+            $("#btn-submit-contact").on("click", function() {
+                const id = $("#contactvm-id").val();
+                const isCreate = id === "";
+                const url = isCreate ? '@Url.Action("Create", "Contact")' : '@Url.Action("Update", "Contact")';
+                const formData = $("form#form-contact").serializeObject();
+                postData({
+                    url: url,
+                    data: { model: formData },
+                    addValidateToken: true
+                }).then(res => {
+                    if (res.success) {
+                        $("#modal-contact").modal('hide');
+                        const newRowData = [null, formData.Phone, formData.Date, formData.CallReason, formData.CallResult];
+                        if (isCreate) {
+                            const rowNode = table.row.add(newRowData).draw().node();
+                            $(rowNode).attr("data-id", res.contactId);
+                            console.log(res.contactId);
+                        }
+                        else
+                            table.row({ selected: true }).data(newRowData).draw();
+                    }
+                    alert(res.message);
+                });
+            });
+
+            // call create modal
+            $("table#table-call-list").on("click", "button.btn-call-create-modal", function() {
+                const contactId = $(this).closest('tr').prev("tr").data('id');
+                $("#modal-call .modal-title").text("Arama Ekle");
+                $("#modal-call button#btn-submit-call").text("Kaydet");
+                $("#callvm-contact-id").val(contactId);
+                $("#modal-call").modal('show');
+            });
+
+            // call update modal
+            $("table#table-call-list").on("click", "button.btn-call-update-modal", function() {
+                const id = $(this).closest('tr').data('id');
+
+                postData({
+                    url: '@Url.Action("GetCallAsJson", "Call")',
+                    data: { id: id },
+                    addValidateToken: true
+                }).then(res => {
+                    if (res.success) {
+                        $("#callvm-id").val(res.data.Id);
+                        $("#callvm-contact-id").val(res.data.ContactId);
+                        $('#callvm-date').val(moment(res.data.Date).format(myv.dateTimeFormat));
+                        $("#callvm-is-access").prop("checked", res.data.IsAccess);
+                        $("#modal-call .modal-title").text("Arama Güncelle");
+                        $("#modal-call button#btn-submit-call").text("Güncelle");
+                        $("#modal-call").modal('show');
+                    } else
+                        alert(res.message);
+                });
+            });
+
+            // update or create call
+            $("#btn-submit-call").on("click", function() {
+
+                const id = $("#callvm-id").val();
+                const url = id === "" ? '@Url.Action("Create", "Call")' : '@Url.Action("Update", "Call")';
+                const formData = $("form#form-call").serializeObject();
+
+                postData({
+                    url: url,
+                    data: { model: formData },
+                    addValidateToken: true
+                }).then(res => {
+                    if (res.success) {
+                        updateChildRows({ contactId: formData.ContactId });
+                        $("#modal-call").modal('hide');
+                    }
+                    alert(res.message);
+                });
+            });
+
+            // delete call
+            $("table#table-call-list").on("click", "button.btn-call-delete", function() {
+                if (confirm('Silmek istediğinize emin misiniz?')) {
+                    const btn = $(this);
+                    const id = btn.closest('tr').data('id');
+                    postData({
+                        url: '@Url.Action("Delete", "Call")',
+                        data: { id: id },
+                        addValidateToken: true
+                    }).then(res => {
+                        if (res.success) {
+                            const contactId = btn.parents('tr').last().prev('tr').data('id');
+                            updateChildRows({ contactId: contactId });
+                        }
+                        alert(res.message);
+                    });
+                }
+            });
+
+            // modallar kapandığında formları resetle
+            $('#modal-call').on('hidden.bs.modal', function() { $(this).find('#form-call')[0].reset(); });
+            $('#modal-contact').on('hidden.bs.modal', function() { $(this).find('#form-contact')[0].reset(); });
+
+            // Bu fonksiyona parentRow ya da contactId den sadece biri verilmelidir. Birinden diğeri elde edildiği için
+            // ikisini birden vermek anlamsızdır. Hangisi biliniyorsa o verilmelidir.
+            // parentRow => datatable.Row, contactId => int
+            function updateChildRows({ parentRow = null, contactId = null,  } = {}) {
+
+                if (!contactId && !parentRow)
+                    return;
+
+                let ptr;
+                if (contactId)
+                    parentRow = parentRow ? parentRow : table.row('[data-id="' + contactId + '"]');
+                if (parentRow) {
+                    ptr = $(parentRow.node());
+                    contactId = contactId ? contactId : ptr.data('id');
+                }
+
+                postData({
+                        url: '@Url.Action("GetCallsAsJson", "Call")',
+                        data: { contactId: contactId },
+                        addValidateToken: true
+                    })
+                    .then((res) => {
+                        if (res.success) {
+                            parentRow.child(childCallsFormat(res.data)).show();
+                            ptr.addClass('shown');
+                        }
+                    });
+            }
+
+        });
+
+        // datatable tablosunda aramaları gösteren tabloyu string şeklinde döner.
+        function childCallsFormat(calls) {
+            const html = [];
+            html.push('<button class="btn-call-create-modal btn btn-sm btn-secondary mb-1">Ekle</button><table>');
+
+            for (let i in calls) {
+                let accessText = calls[i].IsAccess ? "Ulaşıldı" : "Ulaşılamadı";
+                html.push('<tr data-id="' + calls[i].Id + '">');
+                html.push('<td>' + (Number(i) + 1) + '. Arama:</td>');
+                html.push('<td><a href="' + '@Url.Action("Profile","User")' + '/' + calls[i].UserId + '">' + calls[i].UserFullname + '</a></td>');
+                html.push('<td>' + moment(calls[i].Date).format(myv.dateTimeFormat) + '</td>');
+                html.push('<td>' + accessText + '</td>');
+                html.push('<td><button title="Güncelle" class="btn-call-update-modal"><i class="fas fa-edit"></i></button></td>');
+                html.push('<td><button title="Sil" class="btn-call-delete"><i class="fas fa-trash-alt"></i></button></td>');
+                html.push('</tr>');
+            }
+            html.push('</table>');
+            return html.join("");
+        }
+
+    </script>
+}

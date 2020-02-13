@@ -1,0 +1,23 @@
+﻿td.details-control {
+    background: url('https://datatables.net/examples/resources/details_open.png') no-repeat center center;
+    cursor: pointer;
+}
+
+tr.shown td.details-control {
+    background: url('https://datatables.net/examples/resources/details_close.png') no-repeat center center;
+}
+
+.dropdown-item:hover {
+    background-color: #292D31
+}
+
+.dt-row-fixed-top {
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 0;
+    z-index: 1020;
+    background-color: #f5f5f5;
+    padding: 10px 0 4px 0;
+    margin-top: 56px;
+}

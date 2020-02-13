@@ -1,0 +1,44 @@
+﻿@model CallManagerPanel.MVCWebUI.Models.LoginVm
+
+@{
+    ViewBag.Title = "Çağrı Yönetim Paneli - Giriş Yap";
+}
+
+@section contents
+{
+    <link href="~/assets/css/login.css" rel="stylesheet" />
+}
+
+<div class="container">
+
+    <div class="row">
+        <div class="col-sm-9 col-md-7 col-lg-5 mx-auto">
+            <div class="card card-signin my-5">
+                <div class="card-body">
+                    <h5 class="card-title text-center">Giriş Yap</h5>
+
+                    @using (Html.BeginForm("SignIn", "Home", FormMethod.Post, new { @class = "form-signin" }))
+                    {
+                        @Html.AntiForgeryToken()
+                        <div class="form-label-group">
+                            @Html.TextBoxFor(x => x.User.Username, new { @class = "form-control", placeholder = "Username", required = "required", autofocus = "autofocus" })
+                            @Html.LabelFor(x => x.User.Username, "Kullanıcı Adı")
+                        </div>
+
+                        <div class="form-label-group">
+                            @Html.TextBoxFor(x => x.User.Password, new { @class = "form-control", type = "password", placeholder = "Password", required = "required" })
+                            @Html.LabelFor(x => x.User.Password, "Şifre")
+                        </div>
+
+                        <div class="custom-control custom-checkbox mb-3">
+                            @Html.CheckBoxFor(x => x.RememberMe, new { @class = "custom-control-input" })
+                            @Html.LabelFor(x => x.RememberMe, "Beni Hatırla", new { @class = "custom-control-label" })
+                        </div>
+                        <button class="btn btn-lg btn-primary btn-block text-uppercase" type="submit">Giriş</button>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
