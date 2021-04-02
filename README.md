@@ -34,7 +34,7 @@ __Date__ sütununu(property) sadece __Admin__ rolünde, __Phone__ sütununu ise 
 
 ## Demo
 
-Demoya [buradan](http://demos.callmanagerpanel.furkanisitan.com/) ulaşılabilir. Kullanıcı adı ve şifreler aşağıda belirtilmiştir.
+Projeyi [buradan](http://callmanagerpanel.filabs.xyz) test edebilirsiniz. Kullanıcı adı ve şifreler aşağıda belirtilmiştir.
 
 | Rol  | Kullanıcı Adı | Şifre |
 | ------------- | ------------- | ------------- |
